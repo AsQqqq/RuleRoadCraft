@@ -1,0 +1,8 @@
+{
+    "name": "object1",
+    "description": "Первый объект для песочницы",
+    "version": "1.0",
+    "width": 50,
+    "height": 50,
+    "texture": ["texture/texture1.png"]
+}

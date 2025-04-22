@@ -1,0 +1,98 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+#startScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.7);
+    width: 100%;
+    z-index: 10;
+}
+#startButton {
+    padding: 20px 40px;
+    font-size: 24px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+#startButton:hover {
+    background-color: #218838;
+}
+#gameArea {
+    display: none;
+    flex-direction: row;
+    height: 100vh;
+    width: 100%;
+}
+#toolbox {
+    width: 30%;
+    background-color: #e0e0e0;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    overflow-y: auto;
+    position: relative;
+}
+#trash {
+    width: 50px;
+    height: 50px;
+    background-color: #ff4d4d;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    cursor: default;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+#trash.dragover {
+    background-color: #cc0000;
+}
+#canvas {
+    width: 70%;
+    height: 100%;
+    background-color: #ffffff;
+    border-left: 2px solid #333;
+    position: relative;
+    overflow: hidden;
+    background-image: linear-gradient(to right, #d3d3d3 1px, transparent 1px),
+                      linear-gradient(to bottom, #d3d3d3 1px, transparent 1px);
+    background-size: 12.5px 12.5px;
+}
+.block {
+    cursor: move;
+    user-select: none;
+    position: relative;
+}
+.block img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none; /* Предотвращаем drag на изображении */
+}
+.draggable {
+    position: absolute;
+    z-index: 1;
+}
+#error {
+    color: red;
+    font-size: 14px;
+    text-align: center;
+}

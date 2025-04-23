@@ -85,11 +85,18 @@ body {
     width: 100%;
     height: 100%;
     display: block;
-    pointer-events: none; /* Предотвращаем drag на изображении */
+    pointer-events: none;
 }
 .draggable {
     position: absolute;
     z-index: 1;
+}
+.preview {
+    border: 4px solid #0000ff !important;
+    box-sizing: border-box;
+    opacity: 0.95 !important;
+    z-index: 1000 !important;
+    background-color: rgba(0, 0, 255, 0.1) !important; /* Для отладки */
 }
 #error {
     color: red;

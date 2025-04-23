@@ -5,6 +5,8 @@ const canvas = document.getElementById('canvas');
 const toolbox = document.getElementById('toolbox');
 const gridSize = 12.5;
 let draggedBlock = null;
+let previewBlock = null;
+let dragDataFallback = null;
 
 // Проверка существования текстуры
 async function checkTexture(folder, texturePath) {
@@ -42,7 +44,6 @@ async function initToolbox() {
 
     for (const folder of folders) {
         try {
-            // Проверка наличия config.json
             const response = await fetch(`assets/${folder}/config.json`);
             if (!response.ok) {
                 console.warn(`config.json не найден в assets/${folder}`);
@@ -50,13 +51,11 @@ async function initToolbox() {
             }
             const config = await response.json();
 
-            // Проверка обязательных полей
             if (!config.name || !config.version || !config.width || !config.height || !Array.isArray(config.texture) || config.texture.length === 0) {
                 console.warn(`Некорректный config.json в assets/${folder}: отсутствуют обязательные поля`);
                 continue;
             }
 
-            // Проверка текстур
             let textureValid = true;
             for (const texture of config.texture) {
                 if (!(await checkTexture(folder, texture))) {
@@ -67,7 +66,6 @@ async function initToolbox() {
             }
             if (!textureValid) continue;
 
-            // Добавление валидного объекта в toolbox
             const block = document.createElement('div');
             block.className = 'block';
             block.style.width = `${config.width}px`;
@@ -75,6 +73,10 @@ async function initToolbox() {
             block.draggable = true;
             block.dataset.config = JSON.stringify(config);
             block.dataset.folder = folder;
+            if (!block.dataset.config || !block.dataset.folder) {
+                console.warn(`Ошибка: dataset.config или dataset.folder не заданы для блока в ${folder}`);
+                continue;
+            }
             const img = document.createElement('img');
             img.src = `assets/${folder}/${config.texture[0]}`;
             img.onerror = () => {
@@ -88,7 +90,7 @@ async function initToolbox() {
         }
     }
 
-    if (toolbox.children.length <= 1) { // Только мусорка
+    if (toolbox.children.length <= 1) {
         const errorDiv = document.createElement('div');
         errorDiv.id = 'error';
         errorDiv.textContent = 'Нет валидных объектов в assets';
@@ -102,21 +104,34 @@ startButton.addEventListener('click', () => {
     initToolbox();
 });
 
+// Создание пустого изображения для drag
+const blankImage = new Image();
+blankImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 toolbox.addEventListener('dragstart', (e) => {
     let block = e.target;
     if (!block.classList.contains('block')) {
         block = block.closest('.block');
     }
-    if (block) {
-        console.log('Dragstart from toolbox:', {
+    if (block && block.dataset.config && block.dataset.folder) {
+        const dragData = {
             config: block.dataset.config,
-            folder: block.dataset.folder
-        });
-        e.dataTransfer.setData('text/plain', ''); // Для совместимости с браузерами
-        e.dataTransfer.setData('config', block.dataset.config || '');
-        e.dataTransfer.setData('folder', block.dataset.folder || '');
+            folder: block.dataset.folder,
+            isFromCanvas: false
+        };
+        console.log('Dragstart from toolbox:', dragData);
+        try {
+            const serializedData = JSON.stringify(dragData);
+            console.log('Setting dataTransfer:', serializedData);
+            e.dataTransfer.setData('text/plain', serializedData);
+            dragDataFallback = dragData;
+        } catch (error) {
+            console.error(`Ошибка записи dataTransfer: ${error.message}`);
+            dragDataFallback = dragData;
+        }
+        e.dataTransfer.setDragImage(blankImage, 0, 0);
     } else {
-        console.warn('Dragstart failed: no block found');
+        console.warn('Dragstart failed: no block or invalid dataset', { block });
     }
 });
 
@@ -125,74 +140,179 @@ canvas.addEventListener('dragstart', (e) => {
     if (!block.classList.contains('block')) {
         block = block.closest('.block');
     }
-    if (block) {
-        console.log('Dragstart from canvas:', {
-            config: block.dataset.config,
-            folder: block.dataset.folder
-        });
+    if (block && block.dataset.config && block.dataset.folder) {
         draggedBlock = block;
-        e.dataTransfer.setData('text/plain', '');
-        e.dataTransfer.setData('isFromCanvas', 'true');
+        const dragData = {
+            config: block.dataset.config,
+            folder: block.dataset.folder,
+            isFromCanvas: true
+        };
+        console.log('Dragstart from canvas:', dragData);
+        try {
+            const serializedData = JSON.stringify(dragData);
+            console.log('Setting dataTransfer:', serializedData);
+            e.dataTransfer.setData('text/plain', serializedData);
+            dragDataFallback = dragData;
+        } catch (error) {
+            console.error(`Ошибка записи dataTransfer: ${error.message}`);
+            dragDataFallback = dragData;
+        }
+        e.dataTransfer.setDragImage(blankImage, 0, 0);
     } else {
-        console.warn('Dragstart failed: no block found');
+        console.warn('Dragstart failed: no block or invalid dataset');
     }
 });
 
 canvas.addEventListener('dragover', (e) => {
     e.preventDefault();
+    if (!dragDataFallback) {
+        console.warn('Dragover failed: no data in dragDataFallback');
+        return;
+    }
+
+    const dragData = dragDataFallback;
+    const rect = canvas.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    console.log('Dragover on canvas:', {
+        dragData: dragData,
+        offsetX: offsetX,
+        offsetY: offsetY
+    });
+
+    if (dragData.config && dragData.folder && !dragData.isFromCanvas) {
+        try {
+            const config = JSON.parse(dragData.config);
+            const folder = dragData.folder;
+            const snappedX = Math.round((offsetX - config.width / 2) / gridSize) * gridSize;
+            const snappedY = Math.round((offsetY - config.height / 2) / gridSize) * gridSize;
+            console.log('Updating preview block:', { snappedX, snappedY, config });
+
+            if (!previewBlock) {
+                console.log('Creating new preview block');
+                previewBlock = document.createElement('div');
+                previewBlock.className = 'block preview';
+                previewBlock.style.width = `${config.width}px`;
+                previewBlock.style.height = `${config.height}px`;
+                previewBlock.style.position = 'absolute';
+                previewBlock.dataset.config = dragData.config;
+                previewBlock.dataset.folder = folder;
+                const img = document.createElement('img');
+                img.src = `assets/${folder}/${config.texture[0]}`;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.onerror = () => {
+                    console.error(`Не удалось загрузить текстуру для ${config.name}`);
+                    img.src = 'https://via.placeholder.com/50x50/cccccc?text=Error';
+                };
+                previewBlock.appendChild(img);
+                canvas.appendChild(previewBlock);
+            }
+            previewBlock.style.left = `${snappedX}px`;
+            previewBlock.style.top = `${snappedY}px`;
+        } catch (error) {
+            console.error(`Ошибка предпросмотра блока: ${error.message}`);
+        }
+    } else if (dragData.isFromCanvas && draggedBlock) {
+        try {
+            const blockConfig = JSON.parse(draggedBlock.dataset.config || '{"width": 50, "height": 50}');
+            const snappedX = Math.round((offsetX - blockConfig.width / 2) / gridSize) * gridSize;
+            const snappedY = Math.round((offsetY - blockConfig.height / 2) / gridSize) * gridSize;
+            console.log('Moving existing block preview:', { snappedX, snappedY });
+            draggedBlock.classList.add('preview');
+            draggedBlock.style.left = `${snappedX}px`;
+            draggedBlock.style.top = `${snappedY}px`;
+        } catch (error) {
+            console.error(`Ошибка предпросмотра перемещения: ${error.message}`);
+        }
+    } else {
+        console.warn('Dragover failed: invalid drag data');
+    }
+});
+
+canvas.addEventListener('dragleave', (e) => {
+    // Удаляем previewBlock только если курсор полностью покидает canvas
+    if (previewBlock && !canvas.contains(e.relatedTarget)) {
+        console.log('Removing preview block on dragleave');
+        previewBlock.remove();
+        previewBlock = null;
+    }
 });
 
 canvas.addEventListener('drop', (e) => {
     e.preventDefault();
-    const configData = e.dataTransfer.getData('config');
-    const folder = e.dataTransfer.getData('folder');
-    const isFromCanvas = e.dataTransfer.getData('isFromCanvas');
+    if (!dragDataFallback) {
+        console.warn('Drop failed: no data in dragDataFallback');
+        return;
+    }
+
+    const dragData = dragDataFallback;
     console.log('Drop on canvas:', {
-        config: configData,
-        folder: folder,
-        isFromCanvas: isFromCanvas,
+        dragData: dragData,
         offsetX: e.offsetX,
         offsetY: e.offsetY
     });
 
-    if (configData && folder) {
-        // Новый блок из toolbox
+    // Получаем границы canvas для корректного вычисления позиции
+    const rect = canvas.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+
+    if (dragData.config && dragData.folder && !dragData.isFromCanvas) {
+        // Фиксация нового блока из toolbox
         try {
-            const config = JSON.parse(configData);
-            const snappedX = Math.round((e.offsetX - config.width / 2) / gridSize) * gridSize;
-            const snappedY = Math.round((e.offsetY - config.height / 2) / gridSize) * gridSize;
+            const config = JSON.parse(dragData.config);
+            const folder = dragData.folder;
+            const snappedX = Math.round((offsetX - config.width / 2) / gridSize) * gridSize;
+            const snappedY = Math.round((offsetY - config.height / 2) / gridSize) * gridSize;
             console.log('Creating new block:', { snappedX, snappedY, config });
 
-            const block = document.createElement('div');
-            block.className = 'block draggable';
-            block.style.width = `${config.width}px`;
-            block.style.height = `${config.height}px`;
-            block.style.left = `${snappedX}px`;
-            block.style.top = `${snappedY}px`;
-            block.style.position = 'absolute';
-            block.draggable = true;
-            block.dataset.config = configData;
-            block.dataset.folder = folder;
-            const img = document.createElement('img');
-            img.src = `assets/${folder}/${config.texture[0]}`;
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.onerror = () => {
-                console.error(`Не удалось загрузить текстуру для ${config.name}`);
-                img.src = 'https://via.placeholder.com/50x50/cccccc?text=Error';
-            };
-            block.appendChild(img);
-            canvas.appendChild(block);
+            if (previewBlock) {
+                console.log('Converting preview block to permanent');
+                previewBlock.className = 'block draggable';
+                previewBlock.draggable = true;
+                previewBlock.style.left = `${snappedX}px`;
+                previewBlock.style.top = `${snappedY}px`;
+                previewBlock = null;
+            } else {
+                console.log('Creating new block (fallback)');
+                const block = document.createElement('div');
+                block.className = 'block draggable';
+                block.style.width = `${config.width}px`;
+                block.style.height = `${config.height}px`;
+                block.style.left = `${snappedX}px`;
+                block.style.top = `${snappedY}px`;
+                block.style.position = 'absolute';
+                block.draggable = true;
+                block.dataset.config = dragData.config;
+                block.dataset.folder = folder;
+                const img = document.createElement('img');
+                img.src = `assets/${folder}/${config.texture[0]}`;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.onerror = () => {
+                    console.error(`Не удалось загрузить текстуру для ${config.name}`);
+                    img.src = 'https://via.placeholder.com/50x50/cccccc?text=Error';
+                };
+                block.appendChild(img);
+                canvas.appendChild(block);
+            }
         } catch (error) {
             console.error(`Ошибка создания блока: ${error.message}`);
+            if (previewBlock) {
+                previewBlock.remove();
+                previewBlock = null;
+            }
         }
-    } else if (isFromCanvas && draggedBlock) {
-        // Перемещение существующего блока на canvas
+    } else if (dragData.isFromCanvas && draggedBlock) {
+        // Фиксация перемещения существующего блока
         try {
             const blockConfig = JSON.parse(draggedBlock.dataset.config || '{"width": 50, "height": 50}');
-            const snappedX = Math.round((e.offsetX - blockConfig.width / 2) / gridSize) * gridSize;
-            const snappedY = Math.round((e.offsetY - blockConfig.height / 2) / gridSize) * gridSize;
-            console.log('Moving existing block:', { snappedX, snappedY });
+            const snappedX = Math.round((offsetX - blockConfig.width / 2) / gridSize) * gridSize;
+            const snappedY = Math.round((offsetY - blockConfig.height / 2) / gridSize) * gridSize;
+            console.log('Fixing existing block:', { snappedX, snappedY });
+            draggedBlock.classList.remove('preview');
             draggedBlock.style.left = `${snappedX}px`;
             draggedBlock.style.top = `${snappedY}px`;
             draggedBlock = null;
@@ -200,8 +320,9 @@ canvas.addEventListener('drop', (e) => {
             console.error(`Ошибка перемещения блока: ${error.message}`);
         }
     } else {
-        console.warn('Drop failed: no valid config or folder data');
+        console.warn('Drop failed: invalid drag data');
     }
+    dragDataFallback = null; // Очистка после drop
 });
 
 toolbox.addEventListener('dragover', (e) => {
@@ -211,9 +332,11 @@ toolbox.addEventListener('dragover', (e) => {
     }
 });
 
-toolbox.addEventListener('dragleave', (e) => {
-    if (e.target.id === 'trash') {
-        e.target.classList.remove('dragover');
+canvas.addEventListener('dragleave', (e) => {
+    if (previewBlock && !canvas.contains(e.relatedTarget) && e.relatedTarget !== canvas) {
+        console.log('Removing preview block on dragleave');
+        previewBlock.remove();
+        previewBlock = null;
     }
 });
 
@@ -224,5 +347,10 @@ toolbox.addEventListener('drop', (e) => {
         e.target.classList.remove('dragover');
         draggedBlock.remove();
         draggedBlock = null;
+        if (previewBlock) {
+            previewBlock.remove();
+            previewBlock = null;
+        }
     }
+    dragDataFallback = null; // Очистка после drop в мусорку
 });

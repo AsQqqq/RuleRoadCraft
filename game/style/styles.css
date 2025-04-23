@@ -37,7 +37,7 @@ body {
     width: 100%;
 }
 #toolbox {
-    width: 30%;
+    width: 300px; /* Начальная ширина */
     background-color: #e0e0e0;
     padding: 20px;
     box-sizing: border-box;
@@ -47,29 +47,23 @@ body {
     align-items: center;
     overflow-y: auto;
     position: relative;
+    flex-shrink: 0; /* Предотвращает сжатие */
 }
-#trash {
-    width: 50px;
-    height: 50px;
-    background-color: #ff4d4d;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: white;
-    cursor: default;
-    margin-top: 20px;
-    transition: background-color 0.3s;
+#resizer {
+    width: 5px;
+    background-color: #333;
+    cursor: ew-resize;
+    height: 100%;
+    flex-shrink: 0;
+    transition: background-color 0.2s;
 }
-#trash.dragover {
-    background-color: #cc0000;
+#resizer:hover {
+    background-color: #555;
 }
 #canvas {
-    width: 70%;
+    flex-grow: 1; /* Занимает оставшееся пространство */
     height: 100%;
     background-color: #ffffff;
-    border-left: 2px solid #333;
     position: relative;
     overflow: hidden;
     background-image: linear-gradient(to right, #d3d3d3 1px, transparent 1px),
@@ -96,10 +90,27 @@ body {
     box-sizing: border-box;
     opacity: 0.95 !important;
     z-index: 1000 !important;
-    background-color: rgba(0, 0, 255, 0.1) !important; /* Для отладки */
+    background-color: rgba(0, 0, 255, 0.1) !important;
 }
 #error {
     color: red;
     font-size: 14px;
     text-align: center;
+}
+#trash {
+    width: 50px;
+    height: 50px;
+    background-color: #ff4d4d;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    cursor: default;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+#trash.dragover {
+    background-color: #cc0000;
 }

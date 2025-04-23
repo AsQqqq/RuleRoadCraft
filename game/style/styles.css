@@ -114,3 +114,15 @@ body {
 #trash.dragover {
     background-color: #cc0000;
 }
+
+.version-text {
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    margin: 0;
+    font-size: 6px;
+    color: #000000;
+    z-index: 100;
+    padding: 5px 10px;
+    border-radius: 3px;
+}

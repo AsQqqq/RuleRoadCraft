@@ -37,7 +37,7 @@ body {
     width: 100%;
 }
 #toolbox {
-    width: 300px; /* Начальная ширина */
+    width: 300px;
     background-color: #e0e0e0;
     padding: 20px;
     box-sizing: border-box;
@@ -47,7 +47,7 @@ body {
     align-items: center;
     overflow-y: auto;
     position: relative;
-    flex-shrink: 0; /* Предотвращает сжатие */
+    flex-shrink: 0;
 }
 #resizer {
     width: 5px;
@@ -61,14 +61,20 @@ body {
     background-color: #555;
 }
 #canvas {
-    flex-grow: 1; /* Занимает оставшееся пространство */
+    flex-grow: 1;
     height: 100%;
     background-color: #ffffff;
     position: relative;
     overflow: hidden;
+    --grid-size: 12.5px;
     background-image: linear-gradient(to right, #d3d3d3 1px, transparent 1px),
                       linear-gradient(to bottom, #d3d3d3 1px, transparent 1px);
-    background-size: 12.5px 12.5px;
+    background-size: var(--grid-size) var(--grid-size);
+}
+#canvasContainer {
+    width: 100%;
+    height: 100%;
+    transform-origin: top left;
 }
 .block {
     cursor: move;
@@ -114,7 +120,6 @@ body {
 #trash.dragover {
     background-color: #cc0000;
 }
-
 .version-text {
     position: fixed;
     bottom: 5px;

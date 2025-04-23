@@ -2,8 +2,13 @@ const startScreen = document.getElementById('startScreen');
 const gameArea = document.getElementById('gameArea');
 const startButton = document.getElementById('startButton');
 const canvas = document.getElementById('canvas');
+const canvasContainer = document.getElementById('canvasContainer');
 const toolbox = document.getElementById('toolbox');
-const gridSize = 12.5;
+const BASE_GRID_SIZE = 12.5; // Базовый размер сетки при zoomLevel = 1
+let zoomLevel = 1; // Текущий уровень зума (1 = 100%)
+const MIN_ZOOM = 0.5; // Минимальный зум (половина размера)
+const MAX_ZOOM = 2;   // Максимальный зум (двойной размер)
+const ZOOM_STEP = 0.1; // Шаг изменения зума
 let draggedBlock = null;
 let previewBlock = null;
 let dragDataFallback = null;
@@ -84,12 +89,11 @@ async function initToolbox() {
             }
             if (!textureValid) continue;
 
-            // Проверка и загрузка скрипта, если указан logic
             if (config.logic) {
                 if (await checkResource(folder, config.logic)) {
                     try {
                         await loadLogicScript(folder, config.logic);
-                        console.info(`Скрипт ${config.logic} загружен, для ${fodler}`)
+                        console.info(`Скрипт ${config.logic} загружен для ${folder}`);
                     } catch (error) {
                         console.warn(`Ошибка загрузки скрипта ${config.logic} для ${folder}: ${error.message}`);
                     }
@@ -130,10 +134,46 @@ async function initToolbox() {
     }
 }
 
+// Обновление визуального масштаба
+function updateZoom() {
+    // Применяем масштаб к контейнеру канваса
+    canvasContainer.style.transform = `scale(${zoomLevel})`;
+    // Обновляем размер сетки
+    canvas.style.setProperty('--grid-size', `${BASE_GRID_SIZE * zoomLevel}px`);
+    // Обновляем размеры и позиции блоков на канвасе
+    const blocks = canvas.querySelectorAll('.block.draggable');
+    blocks.forEach(block => {
+        const config = JSON.parse(block.dataset.config || '{"width": 50, "height": 50}');
+        // Масштабируем размеры блока
+        block.style.width = `${config.width * zoomLevel}px`;
+        block.style.height = `${config.height * zoomLevel}px`;
+        // Масштабируем позицию блока
+        const baseLeft = parseFloat(block.dataset.baseLeft || block.style.left || 0);
+        const baseTop = parseFloat(block.dataset.baseTop || block.style.top || 0);
+        block.style.left = `${baseLeft * zoomLevel}px`;
+        block.style.top = `${baseTop * zoomLevel}px`;
+    });
+}
+
+// Обработка масштабирования колесом мыши
+canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 1 : -1; // Направление прокрутки
+    const newZoomLevel = zoomLevel + delta * ZOOM_STEP;
+
+    // Ограничение масштаба
+    if (newZoomLevel >= MIN_ZOOM && newZoomLevel <= MAX_ZOOM) {
+        zoomLevel = newZoomLevel;
+        updateZoom();
+        console.log(`Zoom level updated to: ${zoomLevel}`);
+    }
+});
+
 startButton.addEventListener('click', () => {
     startScreen.style.display = 'none';
     gameArea.style.display = 'flex';
     initToolbox();
+    updateZoom(); // Инициализация масштаба
 });
 
 // Создание пустого изображения для drag
@@ -204,8 +244,9 @@ canvas.addEventListener('dragover', (e) => {
 
     const dragData = dragDataFallback;
     const rect = canvas.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
+    // Учитываем масштаб при вычислении координат
+    const offsetX = (e.clientX - rect.left) / zoomLevel;
+    const offsetY = (e.clientY - rect.top) / zoomLevel;
 
     console.log('Dragover on canvas:', {
         dragData: dragData,
@@ -217,16 +258,16 @@ canvas.addEventListener('dragover', (e) => {
         try {
             const config = JSON.parse(dragData.config);
             const folder = dragData.folder;
-            const snappedX = Math.round((offsetX - config.width / 2) / gridSize) * gridSize;
-            const snappedY = Math.round((offsetY - config.height / 2) / gridSize) * gridSize;
+            const snappedX = Math.round((offsetX - config.width / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
+            const snappedY = Math.round((offsetY - config.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
             console.log('Updating preview block:', { snappedX, snappedY, config });
 
             if (!previewBlock) {
                 console.log('Creating new preview block');
                 previewBlock = document.createElement('div');
                 previewBlock.className = 'block preview';
-                previewBlock.style.width = `${config.width}px`;
-                previewBlock.style.height = `${config.height}px`;
+                previewBlock.style.width = `${config.width * zoomLevel}px`;
+                previewBlock.style.height = `${config.height * zoomLevel}px`;
                 previewBlock.style.position = 'absolute';
                 previewBlock.dataset.config = dragData.config;
                 previewBlock.dataset.folder = folder;
@@ -241,20 +282,20 @@ canvas.addEventListener('dragover', (e) => {
                 previewBlock.appendChild(img);
                 canvas.appendChild(previewBlock);
             }
-            previewBlock.style.left = `${snappedX}px`;
-            previewBlock.style.top = `${snappedY}px`;
+            previewBlock.style.left = `${snappedX * zoomLevel}px`;
+            previewBlock.style.top = `${snappedY * zoomLevel}px`;
         } catch (error) {
             console.error(`Ошибка предпросмотра блока: ${error.message}`);
         }
     } else if (dragData.isFromCanvas && draggedBlock) {
         try {
             const blockConfig = JSON.parse(draggedBlock.dataset.config || '{"width": 50, "height": 50}');
-            const snappedX = Math.round((offsetX - blockConfig.width / 2) / gridSize) * gridSize;
-            const snappedY = Math.round((offsetY - blockConfig.height / 2) / gridSize) * gridSize;
+            const snappedX = Math.round((offsetX - blockConfig.width / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
+            const snappedY = Math.round((offsetY - blockConfig.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
             console.log('Moving existing block preview:', { snappedX, snappedY });
             draggedBlock.classList.add('preview');
-            draggedBlock.style.left = `${snappedX}px`;
-            draggedBlock.style.top = `${snappedY}px`;
+            draggedBlock.style.left = `${snappedX * zoomLevel}px`;
+            draggedBlock.style.top = `${snappedY * zoomLevel}px`;
         } catch (error) {
             console.error(`Ошибка предпросмотра перемещения: ${error.message}`);
         }
@@ -264,7 +305,6 @@ canvas.addEventListener('dragover', (e) => {
 });
 
 canvas.addEventListener('dragleave', (e) => {
-    // Удаляем previewBlock только если курсор полностью покидает canvas
     if (previewBlock && !canvas.contains(e.relatedTarget)) {
         console.log('Removing preview block on dragleave');
         previewBlock.remove();
@@ -286,39 +326,43 @@ canvas.addEventListener('drop', (e) => {
         offsetY: e.offsetY
     });
 
-    // Получаем границы canvas для корректного вычисления позиции
     const rect = canvas.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
+    const offsetX = (e.clientX - rect.left) / zoomLevel;
+    const offsetY = (e.clientY - rect.top) / zoomLevel;
 
     if (dragData.config && dragData.folder && !dragData.isFromCanvas) {
-        // Фиксация нового блока из toolbox
         try {
             const config = JSON.parse(dragData.config);
             const folder = dragData.folder;
-            const snappedX = Math.round((offsetX - config.width / 2) / gridSize) * gridSize;
-            const snappedY = Math.round((offsetY - config.height / 2) / gridSize) * gridSize;
+            const snappedX = Math.round((offsetX - config.width / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
+            const snappedY = Math.round((offsetY - config.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
             console.log('Creating new block:', { snappedX, snappedY, config });
 
             if (previewBlock) {
                 console.log('Converting preview block to permanent');
                 previewBlock.className = 'block draggable';
                 previewBlock.draggable = true;
-                previewBlock.style.left = `${snappedX}px`;
-                previewBlock.style.top = `${snappedY}px`;
+                previewBlock.style.left = `${snappedX * zoomLevel}px`;
+                previewBlock.style.top = `${snappedY * zoomLevel}px`;
+                previewBlock.dataset.baseLeft = snappedX;
+                previewBlock.dataset.baseTop = snappedY;
+                previewBlock.style.width = `${config.width * zoomLevel}px`;
+                previewBlock.style.height = `${config.height * zoomLevel}px`;
                 previewBlock = null;
             } else {
                 console.log('Creating new block (fallback)');
                 const block = document.createElement('div');
                 block.className = 'block draggable';
-                block.style.width = `${config.width}px`;
-                block.style.height = `${config.height}px`;
-                block.style.left = `${snappedX}px`;
-                block.style.top = `${snappedY}px`;
+                block.style.width = `${config.width * zoomLevel}px`;
+                block.style.height = `${config.height * zoomLevel}px`;
+                block.style.left = `${snappedX * zoomLevel}px`;
+                block.style.top = `${snappedY * zoomLevel}px`;
                 block.style.position = 'absolute';
                 block.draggable = true;
                 block.dataset.config = dragData.config;
                 block.dataset.folder = folder;
+                block.dataset.baseLeft = snappedX;
+                block.dataset.baseTop = snappedY;
                 const img = document.createElement('img');
                 img.src = `assets/${folder}/${config.texture[0]}`;
                 img.style.width = '100%';
@@ -338,15 +382,18 @@ canvas.addEventListener('drop', (e) => {
             }
         }
     } else if (dragData.isFromCanvas && draggedBlock) {
-        // Фиксация перемещения существующего блока
         try {
             const blockConfig = JSON.parse(draggedBlock.dataset.config || '{"width": 50, "height": 50}');
-            const snappedX = Math.round((offsetX - blockConfig.width / 2) / gridSize) * gridSize;
-            const snappedY = Math.round((offsetY - blockConfig.height / 2) / gridSize) * gridSize;
+            const snappedX = Math.round((offsetX - blockConfig.width / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
+            const snappedY = Math.round((offsetY - blockConfig.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
             console.log('Fixing existing block:', { snappedX, snappedY });
             draggedBlock.classList.remove('preview');
-            draggedBlock.style.left = `${snappedX}px`;
-            draggedBlock.style.top = `${snappedY}px`;
+            draggedBlock.style.left = `${snappedX * zoomLevel}px`;
+            draggedBlock.style.top = `${snappedY * zoomLevel}px`;
+            draggedBlock.dataset.baseLeft = snappedX;
+            draggedBlock.dataset.baseTop = snappedY;
+            draggedBlock.style.width = `${blockConfig.width * zoomLevel}px`;
+            draggedBlock.style.height = `${blockConfig.height * zoomLevel}px`;
             draggedBlock = null;
         } catch (error) {
             console.error(`Ошибка перемещения блока: ${error.message}`);
@@ -354,7 +401,7 @@ canvas.addEventListener('drop', (e) => {
     } else {
         console.warn('Drop failed: invalid drag data');
     }
-    dragDataFallback = null; // Очистка после drop
+    dragDataFallback = null;
 });
 
 toolbox.addEventListener('dragover', (e) => {
@@ -376,5 +423,5 @@ toolbox.addEventListener('drop', (e) => {
             previewBlock = null;
         }
     }
-    dragDataFallback = null; // Очистка после drop в мусорку
+    dragDataFallback = null;
 });

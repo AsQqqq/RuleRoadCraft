@@ -8,10 +8,10 @@ let draggedBlock = null;
 let previewBlock = null;
 let dragDataFallback = null;
 
-// Проверка существования текстуры
-async function checkTexture(folder, texturePath) {
+// Проверка существования текстуры или скрипта
+async function checkResource(folder, resourcePath) {
     try {
-        const response = await fetch(`assets/${folder}/${texturePath}`);
+        const response = await fetch(`assets/${folder}/${resourcePath}`);
         return response.ok;
     } catch {
         return false;
@@ -31,6 +31,24 @@ async function getFolders() {
         console.error(`Ошибка загрузки folders.json: ${error.message}`);
         return [];
     }
+}
+
+// Динамическая загрузка скрипта
+function loadLogicScript(folder, logicPath) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `assets/${folder}/${logicPath}`;
+        script.async = true;
+        script.onload = () => {
+            console.log(`Скрипт ${logicPath} успешно загружен для ${folder}`);
+            resolve();
+        };
+        script.onerror = () => {
+            console.error(`Не удалось загрузить скрипт ${logicPath} для ${folder}`);
+            reject(new Error(`Не удалось загрузить скрипт ${logicPath}`));
+        };
+        document.head.appendChild(script);
+    });
 }
 
 // Загрузка конфигураций и инициализация toolbox
@@ -58,13 +76,27 @@ async function initToolbox() {
 
             let textureValid = true;
             for (const texture of config.texture) {
-                if (!(await checkTexture(folder, texture))) {
+                if (!(await checkResource(folder, texture))) {
                     console.warn(`Текстура ${texture} не найдена в assets/${folder}`);
                     textureValid = false;
                     break;
                 }
             }
             if (!textureValid) continue;
+
+            // Проверка и загрузка скрипта, если указан logic
+            if (config.logic) {
+                if (await checkResource(folder, config.logic)) {
+                    try {
+                        await loadLogicScript(folder, config.logic);
+                        console.info(`Скрипт ${config.logic} загружен, для ${fodler}`)
+                    } catch (error) {
+                        console.warn(`Ошибка загрузки скрипта ${config.logic} для ${folder}: ${error.message}`);
+                    }
+                } else {
+                    console.warn(`Скрипт ${config.logic} не найден в assets/${folder}`);
+                }
+            }
 
             const block = document.createElement('div');
             block.className = 'block';
@@ -106,7 +138,7 @@ startButton.addEventListener('click', () => {
 
 // Создание пустого изображения для drag
 const blankImage = new Image();
-blankImage.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+blankImage.src = 'data:image/gif;base64,R0lGODlkAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 toolbox.addEventListener('dragstart', (e) => {
     let block = e.target;
@@ -329,14 +361,6 @@ toolbox.addEventListener('dragover', (e) => {
     e.preventDefault();
     if (e.target.id === 'trash') {
         e.target.classList.add('dragover');
-    }
-});
-
-canvas.addEventListener('dragleave', (e) => {
-    if (previewBlock && !canvas.contains(e.relatedTarget) && e.relatedTarget !== canvas) {
-        console.log('Removing preview block on dragleave');
-        previewBlock.remove();
-        previewBlock = null;
     }
 });
 

@@ -1,0 +1,1 @@
+console.log("ДОБРО ПОЖАЛОВАТЬ В ФАЙЛ MAIN.JS ОТ ROAD")

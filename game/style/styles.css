@@ -1,11 +1,13 @@
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #1a1a1a; /* Dark gray-black background */
     height: 100vh;
     display: flex;
     flex-direction: column;
+    color: #ffffff; /* White text for contrast */
 }
+
 #startScreen {
     display: flex;
     flex-direction: column;
@@ -13,32 +15,46 @@ body {
     justify-content: center;
     height: 100vh;
     position: absolute;
-    background-color: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(45deg, #1e3c72, #2a5298); /* Match start screen gradient */
     width: 100%;
     z-index: 10;
 }
+
 #startButton {
     padding: 20px 40px;
     font-size: 24px;
-    background-color: #28a745;
+    background: linear-gradient(45deg, #00b4db, #0083b0); /* Blue gradient */
     color: white;
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.4);
 }
+
 #startButton:hover {
-    background-color: #218838;
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 180, 219, 0.7);
 }
+
 #gameArea {
     display: none;
     flex-direction: row;
     height: 100vh;
     width: 100%;
+    background: linear-gradient(135deg, #1c2526, #2e3b4e); /* Subtle black-blue gradient */
+    animation: fadeIn 1s ease-in;
+    position: relative; /* Added for positioning control buttons */
 }
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 #toolbox {
-    width: 300px;
-    background-color: #e0e0e0;
+    width: 200px;
+    background: linear-gradient(to bottom, #2a2a2a, #1e1e1e); /* Dark toolbox gradient */
     padding: 20px;
     box-sizing: border-box;
     display: flex;
@@ -48,86 +64,242 @@ body {
     overflow-y: auto;
     position: relative;
     flex-shrink: 0;
+    border-right: 1px solid #00b4db; /* Blue accent border */
+    box-shadow: 2px 0 10px rgba(0, 180, 219, 0.2);
+    transition: width 0.3s ease;
 }
+
 #resizer {
     width: 5px;
-    background-color: #333;
+    background-color: #00b4db; /* Blue resizer */
     cursor: ew-resize;
     height: 100%;
     flex-shrink: 0;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
+    position: relative;
 }
+
 #resizer:hover {
-    background-color: #555;
+    background-color: #0083b0; /* Darker blue on hover */
+    transform: scaleX(1.5); /* Slight scale for feedback */
 }
+
+#resizer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    height: 100%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.3); /* Subtle white line for grip */
+    transform: translateX(-50%);
+}
+
 #canvas {
     flex-grow: 1;
     height: 100%;
-    background-color: #ffffff;
     position: relative;
     overflow: hidden;
     --grid-size: 12.5px;
     background-image: linear-gradient(to right, #d3d3d3 1px, transparent 1px),
                       linear-gradient(to bottom, #d3d3d3 1px, transparent 1px);
     background-size: var(--grid-size) var(--grid-size);
+    border-left: 1px solid #00b4db; /* Blue border for cohesion */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Subtle inner shadow */
+    transition: transform 0.3s ease;
+    z-index: 2; /* Ensure grid is above background */
 }
+
+#canvasBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff; /* White base for canvas */
+    z-index: 1; /* Below grid and objects */
+    overflow: hidden;
+}
+
+#canvasBackground::before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at 30% 30%,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.1) 20%,
+        transparent 40%
+    );
+    animation: float 20s linear infinite;
+    filter: blur(15px); /* Soft blur effect */
+    opacity: 0.6; /* Subtle visibility */
+}
+
+#canvasBackground::after {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at 70% 70%,
+        rgba(200, 220, 255, 0.2) 0%,
+        rgba(200, 220, 255, 0.1) 20%,
+        transparent 40%
+    );
+    animation: floatReverse 25s linear infinite;
+    filter: blur(20px); /* Slightly stronger blur */
+    opacity: 0.5;
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-50%, -50%); }
+}
+
+@keyframes floatReverse {
+    0% { transform: translate(-50%, -50%); }
+    100% { transform: translate(0, 0); }
+}
+
 #canvasContainer {
     width: 100%;
     height: 100%;
     transform-origin: top left;
+    position: relative;
+    z-index: 3; /* Ensure draggable objects are above grid and background */
 }
+
 .block {
     cursor: move;
     user-select: none;
     position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+.block:hover {
+    transform: scale(1.05); /* Slight scale on hover */
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.5); /* Blue glow */
+}
+
 .block img {
     width: 100%;
     height: 100%;
     display: block;
     pointer-events: none;
+    border-radius: 5px; /* Rounded corners for polish */
 }
+
 .draggable {
     position: absolute;
-    z-index: 1;
+    z-index: 4; /* Above canvas and background */
+    border: 1px solid #00b4db; /* Blue border for draggable blocks */
 }
+
 .preview {
-    border: 4px solid #0000ff !important;
+    border: 4px solid #00b4db !important; /* Bright blue preview border */
     box-sizing: border-box;
     opacity: 0.95 !important;
     z-index: 1000 !important;
-    background-color: rgba(0, 0, 255, 0.1) !important;
+    background-color: rgba(0, 180, 219, 0.2) !important; /* Light blue fill */
+    animation: pulsePreview 1.5s infinite ease-in-out;
 }
+
+@keyframes pulsePreview {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
 #error {
-    color: red;
+    color: #ff4d4d; /* Keep red for errors */
     font-size: 14px;
     text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 5px;
 }
+
 #trash {
     width: 50px;
     height: 50px;
-    background-color: #ff4d4d;
-    border-radius: 5px;
+    background-color: #2a2a2a; /* Dark trash bin */
+    border: 2px solid #00b4db; /* Blue border */
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    color: white;
+    color: #ffffff;
     cursor: default;
     margin-top: 20px;
-    transition: background-color 0.3s;
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
+#trash:hover {
+    transform: scale(1.1); /* Slight scale on hover */
+    background-color: #0083b0; /* Blue on hover */
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.5);
+}
+
 #trash.dragover {
-    background-color: #cc0000;
+    background-color: #00b4db; /* Bright blue when dragging over */
+    transform: scale(1.2); /* Larger scale for feedback */
 }
+
 .version-text {
     position: fixed;
     bottom: 5px;
     left: 5px;
     margin: 0;
     font-size: 12px;
-    color: #000000;
+    color: #00b4db; /* Blue text */
     z-index: 100;
     padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
     border-radius: 3px;
+    transition: color 0.3s ease;
+}
+
+.version-text:hover {
+    color: #0083b0; /* Darker blue on hover */
+}
+
+#controlButtons {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+
+#playButton, #stopButton {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(to bottom, #2a2a2a, #1e1e1e); /* Dark gradient matching toolbox */
+    border: 2px solid #00b4db; /* Blue border */
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.2);
+}
+
+#playButton:hover, #stopButton:hover {
+    transform: scale(1.1);
+    background-color: #0083b0; /* Blue on hover */
+    box-shadow: 0 6px 20px rgba(0, 180, 219, 0.5);
+}
+
+#playButton:active, #stopButton:active {
+    transform: scale(0.95);
+}
+
+#playButton svg, #stopButton svg {
+    width: 24px;
+    height: 24px;
 }

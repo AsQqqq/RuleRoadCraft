@@ -1,44 +1,5 @@
-body {
-    margin: 0;
-    font-family: 'Roboto', Arial, sans-serif;
-    background-color: #1a1a1a; /* Dark gray-black background */
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    color: #ffffff; /* White text for contrast */
-}
-
-#startScreen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    position: absolute;
-    background: linear-gradient(45deg, #1e3c72, #2a5298); /* Match start screen gradient */
-    width: 100%;
-    z-index: 10;
-}
-
-#startButton {
-    padding: 20px 40px;
-    font-size: 24px;
-    background: linear-gradient(45deg, #00b4db, #0083b0); /* Blue gradient */
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.4);
-}
-
-#startButton:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(0, 180, 219, 0.7);
-}
-
 #gameArea {
-    display: none;
+    display: flex;
     flex-direction: row;
     height: 100vh;
     width: 100%;
@@ -101,8 +62,8 @@ body {
     position: relative;
     overflow: hidden;
     --grid-size: 12.5px;
-    background-image: linear-gradient(to right, #d3d3d3 1px, transparent 1px),
-                      linear-gradient(to bottom, #d3d3d3 1px, transparent 1px);
+    background-image: linear-gradient(to right, #d3d3d349 1px, transparent 1px),
+                      linear-gradient(to bottom, #d3d3d31a 1px, transparent 1px);
     background-size: var(--grid-size) var(--grid-size);
     border-left: 1px solid #00b4db; /* Blue border for cohesion */
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Subtle inner shadow */
@@ -169,6 +130,8 @@ body {
     transform-origin: top left;
     position: relative;
     z-index: 3; /* Ensure draggable objects are above grid and background */
+    transition: transform 0.1s ease; /* Smooth panning */
+    will-change: transform; /* Optimize transform performance */
 }
 
 .block {
@@ -179,7 +142,6 @@ body {
 }
 
 .block:hover {
-    transform: scale(1.05); /* Slight scale on hover */
     box-shadow: 0 4px 15px rgba(0, 180, 219, 0.5); /* Blue glow */
 }
 
@@ -194,7 +156,7 @@ body {
 .draggable {
     position: absolute;
     z-index: 4; /* Above canvas and background */
-    border: 1px solid #00b4db; /* Blue border for draggable blocks */
+    border: 1px solid #00b4db;
 }
 
 .preview {

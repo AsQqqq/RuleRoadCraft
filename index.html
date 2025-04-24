@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Песочница с Drag and Drop</title>
-    <link rel="stylesheet" href="game/style/styles.css">
+    <title>Песочница с Drag and Drop - Начало</title>
+    <link rel="stylesheet" href="game/style/common.css">
     <link rel="stylesheet" href="game/style/startScreen.css">
 </head>
 <body>
@@ -15,25 +15,12 @@
         </div>
         <button id="startButton">Начать</button>
     </div>
-    <div id="gameArea">
-        <p class="version-text">alpha 0.0.3</p>
-        <div id="toolbox"></div>
-        <div id="resizer"></div>
-        <div id="canvas">
-            <div id="canvasContainer"></div>
-        </div>
-        <div id="controlButtons">
-            <button id="playButton" title="Запуск">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#37ff00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>
-            </button>
-            <button id="stopButton" title="Стоп">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff0000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-player-stop"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 5m0 2a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2z" /></svg>
-            </button>
-        </div>
-    </div>
-    <script src=" Weapons-grade "game/script/startScreen.js"></script>
-    <script src="game/script/script.js"></script>
-    <script src="game/script/resizer.js"></script>
-    <script src="game/script/controlButtons.js"></script>
+    <script src="game/script/startScreen.js"></script>
+    <script>
+        document.getElementById('startButton').addEventListener('click', () => {
+            sessionStorage.setItem('hasVisitedStartPage', 'true');
+            window.location.href = 'game.html';
+        });
+    </script>
 </body>
 </html>

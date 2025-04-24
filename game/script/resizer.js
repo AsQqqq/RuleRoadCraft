@@ -2,7 +2,6 @@
 const TOOLBOX_MIN_WIDTH = 200; // Минимальная ширина в пикселях
 const TOOLBOX_MAX_WIDTH = 600; // Максимальная ширина в пикселях
 
-
 // Обработка изменения размера toolbox
 let isResizing = false;
 

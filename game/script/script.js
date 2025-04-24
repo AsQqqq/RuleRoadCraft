@@ -1,6 +1,4 @@
-const startScreen = document.getElementById('startScreen');
 const gameArea = document.getElementById('gameArea');
-const startButton = document.getElementById('startButton');
 const canvas = document.getElementById('canvas');
 const canvasContainer = document.getElementById('canvasContainer');
 const toolbox = document.getElementById('toolbox');
@@ -12,6 +10,11 @@ const ZOOM_STEP = 0.1; // Шаг изменения зума
 let draggedBlock = null;
 let previewBlock = null;
 let dragDataFallback = null;
+let isPanning = false; // Флаг для режима панорамирования
+let panStartX = 0; // Начальная позиция мыши по X при панорамировании
+let panStartY = 0; // Начальная позиция мыши по Y при панорамировании
+let panOffsetX = 0; // Смещение по X для панорамирования
+let panOffsetY = 0; // Смещение по Y для панорамирования
 
 // Проверка существования текстуры или скрипта
 async function checkResource(folder, resourcePath) {
@@ -134,10 +137,12 @@ async function initToolbox() {
     }
 }
 
-// Обновление визуального масштаба
-function updateZoom() {
-    // Применяем масштаб к контейнеру канваса
-    canvasContainer.style.transform = `scale(${zoomLevel})`;
+// Обновление визуального масштаба и панорамирования
+function updateTransform() {
+    // Применяем масштаб и смещение к контейнеру канваса
+    const transform = `translate(${panOffsetX}px, ${panOffsetY}px) scale(${zoomLevel})`;
+    canvasContainer.style.transform = transform;
+    console.log('Applied transform:', transform);
     // Обновляем размер сетки
     canvas.style.setProperty('--grid-size', `${BASE_GRID_SIZE * zoomLevel}px`);
     // Обновляем размеры и позиции блоков на канвасе
@@ -155,26 +160,10 @@ function updateZoom() {
     });
 }
 
-// Обработка масштабирования колесом мыши
-canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 1 : -1; // Направление прокрутки
-    const newZoomLevel = zoomLevel + delta * ZOOM_STEP;
-
-    // Ограничение масштаба
-    if (newZoomLevel >= MIN_ZOOM && newZoomLevel <= MAX_ZOOM) {
-        zoomLevel = newZoomLevel;
-        updateZoom();
-        console.log(`Zoom level updated to: ${zoomLevel}`);
-    }
-});
-
-startButton.addEventListener('click', () => {
-    startScreen.style.display = 'none';
-    gameArea.style.display = 'flex';
-    initToolbox();
-    updateZoom(); // Инициализация масштаба
-});
+// Инициализация игры
+gameArea.style.display = 'flex';
+initToolbox();
+updateTransform(); // Инициализация масштаба и панорамирования
 
 // Создание пустого изображения для drag
 const blankImage = new Image();
@@ -244,14 +233,19 @@ canvas.addEventListener('dragover', (e) => {
 
     const dragData = dragDataFallback;
     const rect = canvas.getBoundingClientRect();
-    // Учитываем масштаб при вычислении координат
-    const offsetX = (e.clientX - rect.left) / zoomLevel;
-    const offsetY = (e.clientY - rect.top) / zoomLevel;
+    // Учитываем масштаб, но не панорамирование при вычислении координат
+    const offsetX = ((e.clientX - rect.left) / zoomLevel);
+    const offsetY = ((e.clientY - rect.top) / zoomLevel);
 
     console.log('Dragover on canvas:', {
         dragData: dragData,
         offsetX: offsetX,
-        offsetY: offsetY
+        offsetY: offsetY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        rectLeft: rect.left,
+        rectTop: rect.top,
+        zoomLevel
     });
 
     if (dragData.config && dragData.folder && !dragData.isFromCanvas) {
@@ -323,12 +317,15 @@ canvas.addEventListener('drop', (e) => {
     console.log('Drop on canvas:', {
         dragData: dragData,
         offsetX: e.offsetX,
-        offsetY: e.offsetY
+        offsetY: e.offsetY,
+        clientX: e.clientX,
+        clientY: e.clientY
     });
 
     const rect = canvas.getBoundingClientRect();
-    const offsetX = (e.clientX - rect.left) / zoomLevel;
-    const offsetY = (e.clientY - rect.top) / zoomLevel;
+    // Учитываем масштаб, но не панорамирование при вычислении координат
+    const offsetX = ((e.clientX - rect.left) / zoomLevel);
+    const offsetY = ((e.clientY - rect.top) / zoomLevel);
 
     if (dragData.config && dragData.folder && !dragData.isFromCanvas) {
         try {

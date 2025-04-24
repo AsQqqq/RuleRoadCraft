@@ -1,0 +1,9 @@
+body {
+    margin: 0;
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #1a1a1a; /* Dark gray-black background */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #ffffff; /* White text for contrast */
+}

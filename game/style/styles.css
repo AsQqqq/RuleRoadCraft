@@ -3,9 +3,9 @@
     flex-direction: row;
     height: 100vh;
     width: 100%;
-    background: linear-gradient(135deg, #1c2526, #2e3b4e); /* Subtle black-blue gradient */
+    background: linear-gradient(135deg, #1c2526, #2e3b4e);
     animation: fadeIn 1s ease-in;
-    position: relative; /* Added for positioning control buttons */
+    position: relative;
 }
 
 @keyframes fadeIn {
@@ -15,7 +15,7 @@
 
 #toolbox {
     width: 200px;
-    background: linear-gradient(to bottom, #2a2a2a, #1e1e1e); /* Dark toolbox gradient */
+    background: linear-gradient(to bottom, #2a2a2a, #1e1e1e);
     padding: 20px;
     box-sizing: border-box;
     display: flex;
@@ -25,14 +25,14 @@
     overflow-y: auto;
     position: relative;
     flex-shrink: 0;
-    border-right: 1px solid #00b4db; /* Blue accent border */
+    border-right: 1px solid #00b4db;
     box-shadow: 2px 0 10px rgba(0, 180, 219, 0.2);
     transition: width 0.3s ease;
 }
 
 #resizer {
     width: 5px;
-    background-color: #00b4db; /* Blue resizer */
+    background-color: #00b4db;
     cursor: ew-resize;
     height: 100%;
     flex-shrink: 0;
@@ -41,8 +41,8 @@
 }
 
 #resizer:hover {
-    background-color: #0083b0; /* Darker blue on hover */
-    transform: scaleX(1.5); /* Slight scale for feedback */
+    background-color: #0083b0;
+    transform: scaleX(1.5);
 }
 
 #resizer::before {
@@ -52,7 +52,7 @@
     left: 50%;
     height: 100%;
     width: 1px;
-    background: rgba(255, 255, 255, 0.3); /* Subtle white line for grip */
+    background: rgba(255, 255, 255, 0.3);
     transform: translateX(-50%);
 }
 
@@ -65,10 +65,10 @@
     background-image: linear-gradient(to right, #d3d3d349 1px, transparent 1px),
                       linear-gradient(to bottom, #d3d3d31a 1px, transparent 1px);
     background-size: var(--grid-size) var(--grid-size);
-    border-left: 1px solid #00b4db; /* Blue border for cohesion */
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3); /* Subtle inner shadow */
+    border-left: 1px solid #00b4db;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
     transition: transform 0.3s ease;
-    z-index: 2; /* Ensure grid is above background */
+    z-index: 2;
 }
 
 #canvasBackground {
@@ -77,8 +77,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: #ffffff; /* White base for canvas */
-    z-index: 1; /* Below grid and objects */
+    background: #ffffff;
+    z-index: 1;
     overflow: hidden;
 }
 
@@ -94,8 +94,8 @@
         transparent 40%
     );
     animation: float 20s linear infinite;
-    filter: blur(15px); /* Soft blur effect */
-    opacity: 0.6; /* Subtle visibility */
+    filter: blur(15px);
+    opacity: 0.6;
 }
 
 #canvasBackground::after {
@@ -110,7 +110,7 @@
         transparent 40%
     );
     animation: floatReverse 25s linear infinite;
-    filter: blur(20px); /* Slightly stronger blur */
+    filter: blur(20px);
     opacity: 0.5;
 }
 
@@ -129,9 +129,9 @@
     height: 100%;
     transform-origin: top left;
     position: relative;
-    z-index: 3; /* Ensure draggable objects are above grid and background */
-    transition: transform 0.1s ease; /* Smooth panning */
-    will-change: transform; /* Optimize transform performance */
+    z-index: 3;
+    transition: transform 0.1s ease;
+    will-change: transform;
 }
 
 .block {
@@ -142,7 +142,7 @@
 }
 
 .block:hover {
-    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.5); /* Blue glow */
+    box-shadow: 0 4px 15px rgba(0, 180, 219, 0.5);
 }
 
 .block img {
@@ -150,21 +150,31 @@
     height: 100%;
     display: block;
     pointer-events: none;
-    border-radius: 5px; /* Rounded corners for polish */
+    border-radius: 5px;
 }
 
 .draggable {
     position: absolute;
-    z-index: 4; /* Above canvas and background */
+    z-index: 4;
     border: 1px solid #00b4db;
 }
 
+.selected {
+    border: 2px solid #ffeb3b !important; /* Yellow border for selected blocks */
+    box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+    background-color: rgba(255, 235, 59, 0.1);
+}
+
+.selection-rect {
+    z-index: 999; /* Below preview but above blocks */
+}
+
 .preview {
-    border: 4px solid #00b4db !important; /* Bright blue preview border */
+    border: 4px solid #00b4db !important;
     box-sizing: border-box;
     opacity: 0.95 !important;
     z-index: 1000 !important;
-    background-color: rgba(0, 180, 219, 0.2) !important; /* Light blue fill */
+    background-color: rgba(0, 180, 219, 0.2) !important;
     animation: pulsePreview 1.5s infinite ease-in-out;
 }
 
@@ -175,7 +185,7 @@
 }
 
 #error {
-    color: #ff4d4d; /* Keep red for errors */
+    color: #ff4d4d;
     font-size: 14px;
     text-align: center;
     background: rgba(255, 255, 255, 0.1);
@@ -186,8 +196,8 @@
 #trash {
     width: 50px;
     height: 50px;
-    background-color: #2a2a2a; /* Dark trash bin */
-    border: 2px solid #00b4db; /* Blue border */
+    background-color: #2a2a2a;
+    border: 2px solid #00b4db;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -200,32 +210,55 @@
 }
 
 #trash:hover {
-    transform: scale(1.1); /* Slight scale on hover */
-    background-color: #0083b0; /* Blue on hover */
+    transform: scale(1.1);
+    background-color: #0083b0;
     box-shadow: 0 4px 15px rgba(0, 180, 219, 0.5);
 }
 
 #trash.dragover {
-    background-color: #00b4db; /* Bright blue when dragging over */
-    transform: scale(1.2); /* Larger scale for feedback */
+    background-color: #00b4db;
+    transform: scale(1.2);
 }
 
-.version-text {
+.version-container {
     position: fixed;
     bottom: 5px;
     left: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 100;
+}
+
+.version-text {
     margin: 0;
     font-size: 12px;
-    color: #00b4db; /* Blue text */
-    z-index: 100;
+    color: #00b4db;
     padding: 5px 10px;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    background: rgba(0, 0, 0, 0.5);
     border-radius: 3px;
     transition: color 0.3s ease;
 }
 
 .version-text:hover {
-    color: #0083b0; /* Darker blue on hover */
+    color: #0083b0;
+}
+
+#helpIcon {
+    cursor: pointer;
+    padding: 3px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+#helpIcon:hover {
+    color: #0083b0;
+    transform: scale(1.1);
+}
+
+#helpIcon:active {
+    transform: scale(0.95);
 }
 
 #controlButtons {
@@ -240,8 +273,8 @@
 #playButton, #stopButton {
     width: 50px;
     height: 50px;
-    background: linear-gradient(to bottom, #2a2a2a, #1e1e1e); /* Dark gradient matching toolbox */
-    border: 2px solid #00b4db; /* Blue border */
+    background: linear-gradient(to bottom, #2a2a2a, #1e1e1e);
+    border: 2px solid #00b4db;
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -253,7 +286,7 @@
 
 #playButton:hover, #stopButton:hover {
     transform: scale(1.1);
-    background-color: #0083b0; /* Blue on hover */
+    background-color: #0083b0;
     box-shadow: 0 6px 20px rgba(0, 180, 219, 0.5);
 }
 

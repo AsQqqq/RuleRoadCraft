@@ -1,10 +1,26 @@
 const playButton = document.getElementById('playButton');
 const stopButton = document.getElementById('stopButton');
 
-playButton.addEventListener('click', () => {
+// Запуск игры
+function start_game() {
     alert('Запуск пока еще не сделан, в разработке');
+};
+
+// Остановка игры
+function stop_game() {
+    alert('Остановить пока невозможно, в разработке');
+};
+
+
+
+
+// Запуски игры =====>
+
+
+playButton.addEventListener('click', () => {
+    start_game();
 });
 
 stopButton.addEventListener('click', () => {
-    alert('Остановить пока невозможно, в разработке');
+    stop_game();
 });

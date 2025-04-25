@@ -1,3 +1,6 @@
 {
-    "folders": ["object1", "object2", "road"]
+    "folders": [
+        "road",
+        "no_stopping_allowed"
+    ]
 }

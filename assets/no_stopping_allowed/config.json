@@ -1,0 +1,9 @@
+{
+    "name": "no_stopping_allowed",
+    "description": "Знак остановка запрещена",
+    "version": "1.0",
+    "type": "road_sign",
+    "width": 25,
+    "height": 25,
+    "texture": ["texture/texture.png"]
+}

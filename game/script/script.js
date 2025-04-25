@@ -1,3 +1,5 @@
+import { canPlaceObject } from './placementRules.js';
+
 const gameArea = document.getElementById('gameArea');
 const canvas = document.getElementById('canvas');
 const canvasContainer = document.getElementById('canvasContainer');
@@ -316,6 +318,19 @@ canvas.addEventListener('dragover', (e) => {
             const snappedY = Math.round((offsetY - config.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
             console.log('Updating preview block:', { snappedX, snappedY, config });
 
+            // Проверяем, можно ли разместить объект
+            const tempBlock = document.createElement('div');
+            tempBlock.dataset.config = dragData.config;
+            tempBlock.dataset.folder = folder;
+            if (!canPlaceObject(tempBlock, snappedX, snappedY, canvas)) {
+                if (previewBlock) {
+                    previewBlock.remove();
+                    previewBlock = null;
+                }
+                console.log('Размещение запрещено: не соответствует правилам');
+                return;
+            }
+
             if (!previewBlock) {
                 console.log('Creating new preview block');
                 previewBlock = document.createElement('div');
@@ -348,6 +363,23 @@ canvas.addEventListener('dragover', (e) => {
                 const mouseBaseY = Math.round(offsetY / BASE_GRID_SIZE) * BASE_GRID_SIZE;
                 const refLeft = parseFloat(draggedBlock.dataset.baseLeft || 0);
                 const refTop = parseFloat(draggedBlock.dataset.baseTop || 0);
+                let isValid = true;
+                draggedBlocks.forEach(block => {
+                    const blockConfig = JSON.parse(block.dataset.config || '{"width": 50, "height": 50}');
+                    const baseLeft = parseFloat(block.dataset.baseLeft || 0);
+                    const baseTop = parseFloat(block.dataset.baseTop || 0);
+                    const offsetLeft = baseLeft - refLeft;
+                    const offsetTop = baseTop - refTop;
+                    const snappedX = mouseBaseX + offsetLeft;
+                    const snappedY = mouseBaseY + offsetTop;
+                    if (!canPlaceObject(block, snappedX, snappedY, canvas)) {
+                        isValid = false;
+                    }
+                });
+                if (!isValid) {
+                    console.log('Перемещение запрещено: не соответствует правилам');
+                    return;
+                }
                 draggedBlocks.forEach(block => {
                     const blockConfig = JSON.parse(block.dataset.config || '{"width": 50, "height": 50}');
                     const baseLeft = parseFloat(block.dataset.baseLeft || 0);
@@ -364,6 +396,11 @@ canvas.addEventListener('dragover', (e) => {
                 const blockConfig = JSON.parse(draggedBlock.dataset.config || '{"width": 50, "height": 50}');
                 const snappedX = Math.round((offsetX - blockConfig.width / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
                 const snappedY = Math.round((offsetY - blockConfig.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
+                if (!canPlaceObject(draggedBlock, snappedX, snappedY, canvas)) {
+                    console.log('Перемещение запрещено: не соответствует правилам');
+                    draggedBlock.classList.remove('preview');
+                    return;
+                }
                 console.log('Moving existing block preview:', { snappedX, snappedY });
                 draggedBlock.classList.add('preview');
                 draggedBlock.style.left = `${snappedX * zoomLevel}px`;
@@ -415,6 +452,19 @@ canvas.addEventListener('drop', (e) => {
             const snappedY = Math.round((offsetY - config.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
             console.log('Creating new block:', { snappedX, snappedY, config });
 
+            // Проверяем, можно ли разместить объект
+            const tempBlock = document.createElement('div');
+            tempBlock.dataset.config = dragData.config;
+            tempBlock.dataset.folder = folder;
+            if (!canPlaceObject(tempBlock, snappedX, snappedY, canvas)) {
+                console.log('Размещение запрещено: не соответствует правилам');
+                if (previewBlock) {
+                    previewBlock.remove();
+                    previewBlock = null;
+                }
+                return;
+            }
+
             if (previewBlock) {
                 console.log('Converting preview block to permanent');
                 previewBlock.className = 'block draggable';
@@ -431,7 +481,7 @@ canvas.addEventListener('drop', (e) => {
                 const block = document.createElement('div');
                 block.className = 'block draggable';
                 block.style.width = `${config.width * zoomLevel}px`;
-                block.style.height = `${config.width * zoomLevel}px`;
+                block.style.height = `${config.height * zoomLevel}px`;
                 block.style.left = `${snappedX * zoomLevel}px`;
                 block.style.top = `${snappedY * zoomLevel}px`;
                 block.style.position = 'absolute';
@@ -467,6 +517,24 @@ canvas.addEventListener('drop', (e) => {
                 const mouseBaseY = Math.round(offsetY / BASE_GRID_SIZE) * BASE_GRID_SIZE;
                 const refLeft = parseFloat(draggedBlock.dataset.baseLeft || 0);
                 const refTop = parseFloat(draggedBlock.dataset.baseTop || 0);
+                let isValid = true;
+                draggedBlocks.forEach(block => {
+                    const blockConfig = JSON.parse(block.dataset.config || '{"width": 50, "height": 50}');
+                    const baseLeft = parseFloat(block.dataset.baseLeft || 0);
+                    const baseTop = parseFloat(block.dataset.baseTop || 0);
+                    const offsetLeft = baseLeft - refLeft;
+                    const offsetTop = baseTop - refTop;
+                    const snappedX = mouseBaseX + offsetLeft;
+                    const snappedY = mouseBaseY + offsetTop;
+                    if (!canPlaceObject(block, snappedX, snappedY, canvas)) {
+                        isValid = false;
+                    }
+                });
+                if (!isValid) {
+                    console.log('Перемещение запрещено: не соответствует правилам');
+                    draggedBlocks.forEach(block => block.classList.remove('preview'));
+                    return;
+                }
                 draggedBlocks.forEach(block => {
                     const blockConfig = JSON.parse(block.dataset.config || '{"width": 50, "height": 50}');
                     const baseLeft = parseFloat(block.dataset.baseLeft || 0);
@@ -489,6 +557,11 @@ canvas.addEventListener('drop', (e) => {
                 const blockConfig = JSON.parse(draggedBlock.dataset.config || '{"width": 50, "height": 50}');
                 const snappedX = Math.round((offsetX - blockConfig.width / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
                 const snappedY = Math.round((offsetY - blockConfig.height / 2) / BASE_GRID_SIZE) * BASE_GRID_SIZE;
+                if (!canPlaceObject(draggedBlock, snappedX, snappedY, canvas)) {
+                    console.log('Перемещение запрещено: не соответствует правилам');
+                    draggedBlock.classList.remove('preview');
+                    return;
+                }
                 console.log('Fixing existing block:', { snappedX, snappedY });
                 draggedBlock.classList.remove('preview');
                 draggedBlock.classList.add('selected'); // Сохраняем выделение после перетаскивания
@@ -541,7 +614,6 @@ toolbox.addEventListener('drop', (e) => {
     }
     dragDataFallback = null;
 });
-
 
 // Обработка нажатия клавиш Delete или Backspace для удаления выделенных блоков
 document.addEventListener('keydown', (e) => {

@@ -2,6 +2,7 @@
     "name": "road",
     "description": "Текстура дороги",
     "version": "1.0",
+    "type": "road",
     "width": 50,
     "height": 50,
     "texture": ["texture/texture1.png"],

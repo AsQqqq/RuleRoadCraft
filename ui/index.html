@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>RuleRoadCraft — Engine Test</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="./styles/base.css" />
+  <link rel="stylesheet" href="./styles/controls.css" />
+  <link rel="stylesheet" href="./styles/modal.css" />
+  <link rel="stylesheet" href="./styles/selection.css" />
+  <link rel="stylesheet" href="./styles/debug.css" />
+  <link rel="stylesheet" href="./styles/road.css" />
+</head>
+<body>
+  <div id="canvas">
+    <div id="canvasContainer"></div>
+  </div>
+
+  <script type="module" src="./ui.js"></script>
+
+  <script>
+    document.addEventListener('contextmenu', e => e.preventDefault());
+  </script>
+
+  <div id="addObjectButton">+</div>
+
+  <!-- Modal backdrop -->
+  <div id="modalBackdrop" class="hidden">
+    <div id="objectModal">
+      <div id="modalHeader">
+        <span class="modalTitle">
+          Добавить объект
+        </span>
+        <button id="closeModal">&#x2715;</button>
+      </div>
+
+      <div class="modalSearch">
+        <div class="searchWrapper">
+          <span class="searchIcon">&#x1F50D;</span>
+          <input
+            type="text"
+            id="modalSearchInput"
+            placeholder="Поиск объектов..."
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
+      <div id="modalContent">
+        <p>Здесь будут объекты</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

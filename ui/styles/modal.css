@@ -1,0 +1,318 @@
+/* ===== MODAL CSS VARIABLES ===== */
+:root {
+  --modal-bg: #1e1e2e;
+  --modal-surface: #252536;
+  --modal-border: #333346;
+  --modal-accent: #00b4db;
+  --modal-accent-glow: rgba(0, 180, 219, 0.25);
+  --modal-text: #e0e0e0;
+  --modal-text-secondary: #8888aa;
+  --modal-text-muted: #555570;
+  --modal-item-bg: #1a1a2e;
+  --modal-item-hover-bg: #22223a;
+  --modal-item-hover-border: #00b4db;
+  --modal-radius: 16px;
+  --modal-radius-sm: 10px;
+}
+
+/* ===== BACKDROP ===== */
+#modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  animation: backdropIn 0.2s ease-out;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== MODAL WINDOW ===== */
+#objectModal {
+  width: 480px;
+  max-width: 92%;
+  max-height: 75vh;
+  background: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: var(--modal-radius);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  color: var(--modal-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ===== HEADER ===== */
+#modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--modal-border);
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modalTitleIcon {
+  font-size: 18px;
+}
+
+#closeModal {
+  background: none;
+  border: none;
+  color: var(--modal-text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+#closeModal:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* ===== SEARCH ===== */
+.modalSearch {
+  padding: 12px 22px 0;
+  flex-shrink: 0;
+}
+
+.searchWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--modal-text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+#modalSearchInput {
+  width: 100%;
+  padding: 10px 14px 10px 36px;
+  background: var(--modal-surface);
+  border: 1px solid var(--modal-border);
+  border-radius: var(--modal-radius-sm);
+  color: var(--modal-text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#modalSearchInput::placeholder {
+  color: var(--modal-text-muted);
+}
+
+#modalSearchInput:focus {
+  border-color: var(--modal-accent);
+  box-shadow: 0 0 0 3px var(--modal-accent-glow);
+}
+
+/* ===== CONTENT AREA ===== */
+#modalContent {
+  padding: 14px 22px 22px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Custom scrollbar */
+#modalContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+#modalContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#modalContent::-webkit-scrollbar-thumb {
+  background: var(--modal-border);
+  border-radius: 3px;
+}
+
+#modalContent::-webkit-scrollbar-thumb:hover {
+  background: var(--modal-text-muted);
+}
+
+/* ===== OBJECT LIST ===== */
+.objList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ===== OBJECT ITEM CARD ===== */
+.objItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--modal-border);
+  border-radius: var(--modal-radius-sm);
+  background: var(--modal-item-bg);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
+  position: relative;
+}
+
+.objItem:hover {
+  border-color: var(--modal-item-hover-border);
+  background: var(--modal-item-hover-bg);
+  box-shadow: 0 4px 20px var(--modal-accent-glow);
+  transform: translateY(-1px);
+}
+
+.objItem:active {
+  transform: translateY(0) scale(0.99);
+  transition-duration: 0.05s;
+}
+
+/* Icon */
+.objIcon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--modal-surface);
+  font-size: 22px;
+  border: 1px solid var(--modal-border);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.objItem:hover .objIcon {
+  border-color: var(--modal-accent);
+  background: rgba(0, 180, 219, 0.08);
+}
+
+/* Info */
+.objInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.objTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.objDesc {
+  font-size: 12px;
+  color: var(--modal-text-secondary);
+  margin-top: 3px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Size badge */
+.objBadge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: var(--modal-surface);
+  border: 1px solid var(--modal-border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--modal-text-secondary);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  white-space: nowrap;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.objItem:hover .objBadge {
+  border-color: var(--modal-accent);
+  color: var(--modal-accent);
+}
+
+/* ===== EMPTY STATE ===== */
+.objEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 10px;
+}
+
+.objEmptyIcon {
+  font-size: 36px;
+  opacity: 0.5;
+}
+
+.objEmptyText {
+  color: var(--modal-text-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ===== NO RESULTS (search) ===== */
+.objNoResults {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  gap: 8px;
+}
+
+.objNoResultsIcon {
+  font-size: 28px;
+  opacity: 0.4;
+}
+
+.objNoResultsText {
+  color: var(--modal-text-muted);
+  font-size: 13px;
+  text-align: center;
+}

@@ -1,0 +1,251 @@
+/* ─── Road SVG Container ─── */
+#roadSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Road Segments ─── */
+.road-segment {
+  stroke: #555;
+  stroke-width: 50;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+/* Road outline (drawn under the main stroke) */
+.road-segment-outline {
+  stroke: #333;
+  stroke-width: 54;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+/* ─── Road Nodes ─── */
+.road-node {
+  fill: #888;
+  stroke: #fff;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.road-node.boundary {
+  fill: #00b4db;
+}
+
+.road-node.deadend {
+  fill: #ff5555;
+}
+
+.road-node.junction {
+  fill: #ffa500;
+}
+
+/* ─── Entry Points (boundary snap targets) ─── */
+.entry-point {
+  fill: rgba(0, 180, 219, 0.25);
+  stroke: #00b4db;
+  stroke-width: 2;
+  stroke-dasharray: 4 2;
+  cursor: pointer;
+  pointer-events: all;
+  transition: fill 0.15s ease;
+}
+
+.entry-point:hover {
+  fill: rgba(0, 180, 219, 0.5);
+}
+
+.entry-point.snapped {
+  fill: rgba(0, 180, 219, 0.7);
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+
+/* ─── Preview (currently drawing) ─── */
+.road-preview-line {
+  stroke: rgba(0, 180, 219, 0.5);
+  stroke-width: 3;
+  stroke-dasharray: 8 4;
+  fill: none;
+  pointer-events: none;
+}
+
+.road-preview-road {
+  stroke: rgba(100, 100, 100, 0.3);
+  stroke-width: 50;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  pointer-events: none;
+}
+
+.road-preview-point {
+  fill: #00b4db;
+  stroke: #fff;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.road-preview-cursor {
+  fill: none;
+  stroke: rgba(0, 180, 219, 0.6);
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+  pointer-events: none;
+}
+
+/* ─── Snap Indicator ─── */
+.snap-indicator {
+  fill: none;
+  stroke: #5fef8f;
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+
+/* ─── Road Tool Toggle Button ─── */
+.road-tool-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 90px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1e1e2e;
+  border: 2px solid #333;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.road-tool-btn:hover {
+  border-color: #00b4db;
+  color: #fff;
+  background: #252540;
+}
+
+.road-tool-btn.active {
+  background: #00b4db;
+  color: #fff;
+  border-color: #00b4db;
+  box-shadow: 0 0 12px rgba(0, 180, 219, 0.4);
+}
+
+/* ─── Dead-End Confirmation Modal ─── */
+.road-confirm-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: roadBackdropIn 0.15s ease-out;
+}
+
+@keyframes roadBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.road-confirm-modal {
+  background: #1e1e2e;
+  border-radius: 12px;
+  padding: 24px 28px;
+  min-width: 340px;
+  max-width: 420px;
+  color: #e0e0e0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  animation: roadModalIn 0.2s ease-out;
+}
+
+@keyframes roadModalIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.road-confirm-modal h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ff5555;
+}
+
+.road-confirm-modal p {
+  margin: 0 0 20px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #aaa;
+}
+
+.road-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.road-confirm-actions button {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.road-confirm-actions .btn-cancel {
+  background: #333;
+  color: #ccc;
+}
+
+.road-confirm-actions .btn-cancel:hover {
+  background: #444;
+}
+
+.road-confirm-actions .btn-confirm {
+  background: #ff5555;
+  color: #fff;
+}
+
+.road-confirm-actions .btn-confirm:hover {
+  background: #ff7070;
+}
+
+/* ─── Hint Toast ─── */
+.road-hint {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  color: #ccc;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: roadHintIn 0.2s ease-out;
+}
+
+@keyframes roadHintIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

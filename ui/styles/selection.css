@@ -1,0 +1,21 @@
+/* ===== SELECTION BOX (Marquee) ===== */
+.selection-box {
+  position: fixed;
+  border: 1.5px dashed rgba(0, 180, 219, 0.8);
+  background: rgba(0, 180, 219, 0.08);
+  pointer-events: none;
+  z-index: 9998;
+  box-sizing: border-box;
+}
+
+/* ===== SELECTED OBJECT HIGHLIGHT ===== */
+.block.selected {
+  outline: 2px solid #ff5555;
+  outline-offset: 0px;
+}
+
+/* ===== PREVIEW HIGHLIGHT (during box selection) ===== */
+.block.selection-preview {
+  outline: 2px dashed rgba(0, 180, 219, 0.7);
+  outline-offset: 0px;
+}

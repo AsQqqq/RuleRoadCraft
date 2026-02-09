@@ -1,0 +1,71 @@
+/* ===== DEBUG OVERLAY ===== */
+.debug-overlay {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  pointer-events: none;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #b0b0b0;
+  background: rgba(12, 12, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 220px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.debug-overlay .debug-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.debug-overlay .debug-section {
+  margin-bottom: 8px;
+}
+
+.debug-overlay .debug-section:last-child {
+  margin-bottom: 0;
+}
+
+.debug-overlay .debug-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 2px;
+}
+
+.debug-overlay .debug-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.debug-overlay .debug-key {
+  color: #666;
+}
+
+.debug-overlay .debug-val {
+  color: #9fefcc;
+  text-align: right;
+}
+
+.debug-overlay .debug-val.dim {
+  color: #667;
+}
+
+/* FPS color coding */
+.debug-overlay .fps-good  { color: #5fef8f; }
+.debug-overlay .fps-ok    { color: #efd55f; }
+.debug-overlay .fps-bad   { color: #ef5f5f; }

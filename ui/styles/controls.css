@@ -1,0 +1,32 @@
+/* ===== ADD OBJECT BUTTON (FAB) ===== */
+#addObjectButton {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #00b4db;
+  color: #000;
+  font-size: 36px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  z-index: 10000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+  border: none;
+}
+
+#addObjectButton:hover {
+  background: #00e0ff;
+  transform: scale(1.08);
+  box-shadow: 0 10px 32px rgba(0, 180, 219, 0.35);
+}
+
+#addObjectButton:active {
+  transform: scale(0.96);
+}

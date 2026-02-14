@@ -38,10 +38,11 @@ export class RoadSegment {
    */
   rebuild(startNode, endNode) {
     // Full point sequence: start → controlPoints → end
+    // Nodes get smoothing: 0 (sharp) so they don't round the first/last corner
     const allPoints = [
-      { x: startNode.x, y: startNode.y },
+      { x: startNode.x, y: startNode.y, smoothing: 0 },
       ...this.controlPoints,
-      { x: endNode.x, y: endNode.y }
+      { x: endNode.x, y: endNode.y, smoothing: 0 }
     ];
 
     this.bezierCurves = BezierMath.pointsToBezierCurves(allPoints);

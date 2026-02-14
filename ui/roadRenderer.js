@@ -23,6 +23,7 @@ export class RoadRenderer {
     this.nodeLayer = this._createGroup('road-nodes');
     this.entryLayer = this._createGroup('road-entry-points');
     this.previewLayer = this._createGroup('road-preview');
+    this.editLayer = this._createGroup('road-edit-handles');
     this.snapLayer = this._createGroup('road-snap');
   }
 
@@ -107,11 +108,12 @@ export class RoadRenderer {
   // ─── Preview (live drawing) ───
 
   /**
-   * Render the preview curve while the user is drawing.
+   * Render the preview while the user is drawing.
    * @param {{x:number, y:number}[]} points — user-placed points so far
    * @param {{x:number, y:number}|null} cursorPos — current cursor world position
+   * @param {boolean} [draftMode=false] — if true, draw straight lines instead of curves
    */
-  renderPreview(points, cursorPos) {
+  renderPreview(points, cursorPos, draftMode = false) {
     this._clearGroup(this.previewLayer);
 
     if (points.length === 0) return;
@@ -120,20 +122,28 @@ export class RoadRenderer {
     const allPts = cursorPos ? [...points, cursorPos] : [...points];
 
     if (allPts.length >= 2) {
-      const curves = BezierMath.pointsToBezierCurves(allPts);
-      const pathData = BezierMath.curvesToSVGPath(curves);
+      let pathData;
+
+      if (draftMode) {
+        pathData = BezierMath.pointsToPolylinePath(allPts);
+      } else {
+        const curves = BezierMath.pointsToBezierCurves(allPts);
+        pathData = BezierMath.curvesToSVGPath(curves);
+      }
 
       if (pathData) {
         // Preview road width (semi-transparent)
         const roadPreview = document.createElementNS(SVG_NS, 'path');
         roadPreview.setAttribute('d', pathData);
         roadPreview.classList.add('road-preview-road');
+        if (draftMode) roadPreview.classList.add('draft');
         this.previewLayer.appendChild(roadPreview);
 
         // Preview center line (dashed)
         const line = document.createElementNS(SVG_NS, 'path');
         line.setAttribute('d', pathData);
         line.classList.add('road-preview-line');
+        if (draftMode) line.classList.add('draft');
         this.previewLayer.appendChild(line);
       }
     }
@@ -237,5 +247,123 @@ export class RoadRenderer {
 
   clearSnapIndicator() {
     this._clearGroup(this.snapLayer);
+  }
+
+  // ─── Edit Mode ───
+
+  /**
+   * Toggle yellow highlight on all road segments (edit mode).
+   * @param {boolean} enabled
+   */
+  highlightAllRoads(enabled) {
+    const elements = this.roadLayer.querySelectorAll('.road-segment, .road-segment-outline');
+    for (const el of elements) {
+      if (enabled) {
+        el.classList.add('editable');
+      } else {
+        el.classList.remove('editable');
+      }
+    }
+  }
+
+  /**
+   * Render draggable edit handles for a selected segment.
+   * @param {RoadSegment} segment
+   * @param {RoadNetwork} network — to look up start/end nodes
+   * @param {number|null} selectedIndex — currently selected point index (-1=start, -2=end, >=0=cp)
+   */
+  renderEditHandles(segment, network, selectedIndex) {
+    this._clearGroup(this.editLayer);
+    if (!segment) return;
+
+    const startNode = network.getNode(segment.startNodeId);
+    const endNode = network.getNode(segment.endNodeId);
+
+    // Draw the segment path highlighted
+    const pathData = segment.toSVGPath();
+    if (pathData) {
+      const highlight = document.createElementNS(SVG_NS, 'path');
+      highlight.setAttribute('d', pathData);
+      highlight.classList.add('edit-segment-highlight');
+      this.editLayer.appendChild(highlight);
+    }
+
+    // Draw control point connections (thin lines from nodes to CPs)
+    if (startNode && segment.controlPoints.length > 0) {
+      const cp0 = segment.controlPoints[0];
+      const connLine = document.createElementNS(SVG_NS, 'line');
+      connLine.setAttribute('x1', startNode.x);
+      connLine.setAttribute('y1', startNode.y);
+      connLine.setAttribute('x2', cp0.x);
+      connLine.setAttribute('y2', cp0.y);
+      connLine.classList.add('edit-connection-line');
+      this.editLayer.appendChild(connLine);
+    }
+
+    if (endNode && segment.controlPoints.length > 0) {
+      const cpLast = segment.controlPoints[segment.controlPoints.length - 1];
+      const connLine = document.createElementNS(SVG_NS, 'line');
+      connLine.setAttribute('x1', endNode.x);
+      connLine.setAttribute('y1', endNode.y);
+      connLine.setAttribute('x2', cpLast.x);
+      connLine.setAttribute('y2', cpLast.y);
+      connLine.classList.add('edit-connection-line');
+      this.editLayer.appendChild(connLine);
+    }
+
+    // Draw start node handle
+    if (startNode) {
+      this._drawEditHandle(startNode.x, startNode.y, 'node', selectedIndex === -1);
+    }
+
+    // Draw end node handle
+    if (endNode) {
+      this._drawEditHandle(endNode.x, endNode.y, 'node', selectedIndex === -2);
+    }
+
+    // Draw control point handles
+    for (let i = 0; i < segment.controlPoints.length; i++) {
+      const cp = segment.controlPoints[i];
+      const isSelected = (selectedIndex === i);
+      this._drawEditHandle(cp.x, cp.y, 'cp', isSelected, cp.smoothing);
+    }
+  }
+
+  /**
+   * Draw a single edit handle circle.
+   * @param {number} x
+   * @param {number} y
+   * @param {'node'|'cp'} type
+   * @param {boolean} selected
+   * @param {number} [smoothing] — only for cp type, shown as ring fill
+   */
+  _drawEditHandle(x, y, type, selected, smoothing) {
+    const r = type === 'node' ? 8 : 6;
+
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    circle.setAttribute('cx', x);
+    circle.setAttribute('cy', y);
+    circle.setAttribute('r', r);
+    circle.classList.add('edit-handle', `edit-handle-${type}`);
+    if (selected) circle.classList.add('selected');
+
+    this.editLayer.appendChild(circle);
+
+    // For control points, show smoothing as a label
+    if (type === 'cp' && smoothing !== undefined && selected) {
+      const text = document.createElementNS(SVG_NS, 'text');
+      text.setAttribute('x', x);
+      text.setAttribute('y', y - r - 4);
+      text.classList.add('edit-smoothing-label');
+      text.textContent = `${Math.round(smoothing * 100)}%`;
+      this.editLayer.appendChild(text);
+    }
+  }
+
+  /**
+   * Clear all edit handles.
+   */
+  clearEditHandles() {
+    this._clearGroup(this.editLayer);
   }
 }

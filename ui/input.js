@@ -59,7 +59,7 @@ export class InputController {
 
   onMouseDown = (e) => {
     if (e.button !== 0) return; // only LMB
-    if (this.roadTool?.isActive()) return; // road tool handles its own input
+    if (this.roadTool?.isActive() || this.roadTool?.isEditMode()) return; // road tool handles its own input
 
     const target = e.target.closest('.block');
     const shift = e.shiftKey;
@@ -128,7 +128,7 @@ export class InputController {
   // ─── MOUSE MOVE ───
 
   onMouseMove = (e) => {
-    if (this.roadTool?.isActive()) return;
+    if (this.roadTool?.isActive() || this.roadTool?.isEditMode()) return;
     if (!this.mouseDownPos) return;
 
     // check drag threshold
@@ -188,7 +188,7 @@ export class InputController {
   // ─── MOUSE UP ───
 
   onMouseUp = (e) => {
-    if (this.roadTool?.isActive()) return;
+    if (this.roadTool?.isActive() || this.roadTool?.isEditMode()) return;
     if (this.isDragging) {
       this.finishDrag();
     } else if (this.isBoxSelecting) {

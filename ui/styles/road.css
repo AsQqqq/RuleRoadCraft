@@ -102,6 +102,85 @@
   pointer-events: none;
 }
 
+/* ─── Draft mode preview (straight angular lines) ─── */
+.road-preview-road.draft {
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+}
+
+.road-preview-line.draft {
+  stroke-dasharray: 6 6;
+  stroke-linejoin: miter;
+}
+
+/* ─── Editable highlight (edit mode — yellow tint) ─── */
+.road-segment.editable {
+  stroke: #b8a030;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.road-segment-outline.editable {
+  stroke: #8a7520;
+}
+
+/* ─── Edit handles ─── */
+.edit-segment-highlight {
+  stroke: #ffd740;
+  stroke-width: 54;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.edit-connection-line {
+  stroke: rgba(255, 215, 64, 0.4);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.edit-handle {
+  stroke: #fff;
+  stroke-width: 2;
+  cursor: grab;
+  pointer-events: all;
+  transition: fill 0.1s ease;
+}
+
+.edit-handle-node {
+  fill: #ffd740;
+}
+
+.edit-handle-cp {
+  fill: #40c4ff;
+}
+
+.edit-handle.selected {
+  stroke: #fff;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+}
+
+.edit-handle-node.selected {
+  fill: #ffab00;
+}
+
+.edit-handle-cp.selected {
+  fill: #00b0ff;
+}
+
+.edit-smoothing-label {
+  fill: #fff;
+  font-size: 11px;
+  text-anchor: middle;
+  pointer-events: none;
+  font-family: monospace;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
 /* ─── Snap Indicator ─── */
 .snap-indicator {
   fill: none;
@@ -142,6 +221,74 @@
   color: #fff;
   border-color: #00b4db;
   box-shadow: 0 0 12px rgba(0, 180, 219, 0.4);
+}
+
+/* ─── Road Edit Button (above create button) ─── */
+.road-edit-btn {
+  position: fixed;
+  bottom: 86px;
+  right: 90px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1e1e2e;
+  border: 2px solid #333;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.road-edit-btn:hover {
+  border-color: #ffd740;
+  color: #fff;
+  background: #2e2e1e;
+}
+
+.road-edit-btn.active {
+  background: #ffd740;
+  color: #1e1e2e;
+  border-color: #ffd740;
+  box-shadow: 0 0 12px rgba(255, 215, 64, 0.4);
+}
+
+/* ─── Draft Mode Toggle Button ─── */
+.road-draft-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 146px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #1e1e2e;
+  border: 2px solid #333;
+  color: #aaa;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-family: monospace;
+}
+
+.road-draft-btn:hover {
+  border-color: #00b4db;
+  color: #fff;
+}
+
+.road-draft-btn.active {
+  background: #333;
+  color: #00b4db;
+  border-color: #00b4db;
 }
 
 /* ─── Dead-End Confirmation Modal ─── */

@@ -261,9 +261,17 @@ function applyCamera() {
 
 applyCamera();
 
-// zoom
+// zoom (skip when road tool is adjusting smoothing via scroll)
 viewport.addEventListener('wheel', (e) => {
   e.preventDefault();
+
+  // If road edit mode has a control point selected, wheel adjusts smoothing — don't zoom
+  if (roadTool.isEditMode() &&
+      roadTool.selectedSegment !== null &&
+      roadTool.selectedPointIndex !== null &&
+      roadTool.selectedPointIndex >= 0) {
+    return;
+  }
 
   const rect = viewport.getBoundingClientRect();
   const sx = e.clientX - rect.left;
@@ -300,6 +308,61 @@ window.addEventListener('mousemove', e => {
 });
 
 window.addEventListener('mouseup', () => pan = false);
+
+// ─── WASD Camera Movement ───
+const keysDown = new Set();
+const PAN_SPEED = 8; // pixels per frame (screen-space)
+
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  // Don't capture WASD when road tool is active (D = draft toggle, other keys may conflict)
+  const roadActive = roadTool.isActive() || roadTool.isEditMode();
+
+  const k = e.key.toLowerCase();
+  // Arrow keys always work for camera movement
+  if (k === 'arrowup')    { keysDown.add('up');    e.preventDefault(); }
+  if (k === 'arrowdown')  { keysDown.add('down');  e.preventDefault(); }
+  if (k === 'arrowleft')  { keysDown.add('left');  e.preventDefault(); }
+  if (k === 'arrowright') { keysDown.add('right'); e.preventDefault(); }
+
+  // WASD only when road tool is NOT active
+  if (!roadActive) {
+    if (k === 'w' || k === 'ц')  { keysDown.add('up');    e.preventDefault(); }
+    if (k === 's' || k === 'ы')  { keysDown.add('down');  e.preventDefault(); }
+    if (k === 'a' || k === 'ф')  { keysDown.add('left');  e.preventDefault(); }
+    if (k === 'd' || k === 'в')  { keysDown.add('right'); e.preventDefault(); }
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  const k = e.key.toLowerCase();
+  if (k === 'w' || k === 'ц' || k === 'arrowup')    keysDown.delete('up');
+  if (k === 's' || k === 'ы' || k === 'arrowdown')   keysDown.delete('down');
+  if (k === 'a' || k === 'ф' || k === 'arrowleft')   keysDown.delete('left');
+  if (k === 'd' || k === 'в' || k === 'arrowright')   keysDown.delete('right');
+});
+
+// Clear keys on blur (prevent stuck keys when switching windows)
+window.addEventListener('blur', () => keysDown.clear());
+
+function wasdLoop() {
+  if (keysDown.size > 0) {
+    let dx = 0, dy = 0;
+    if (keysDown.has('left'))  dx += PAN_SPEED;
+    if (keysDown.has('right')) dx -= PAN_SPEED;
+    if (keysDown.has('up'))    dy += PAN_SPEED;
+    if (keysDown.has('down'))  dy -= PAN_SPEED;
+
+    if (dx !== 0 || dy !== 0) {
+      camera.panBy(dx, dy);
+      applyCamera();
+    }
+  }
+  requestAnimationFrame(wasdLoop);
+}
+requestAnimationFrame(wasdLoop);
 
 // ─── Input controller (selection + drag + selection box) ───
 new InputController({

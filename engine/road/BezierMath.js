@@ -56,18 +56,22 @@ export class BezierMath {
    * The resulting Bezier goes from p1 to p2.
    * alpha: 0 = uniform, 0.5 = centripetal, 1 = chordal
    */
-  static catmullRomToBezier(p0, p1, p2, p3, smoothing = 1) {
-    // smoothing: 0 = sharp corner (no tangent), 1 = full Catmull-Rom smoothing
-    const t = (1 / 3) * smoothing;
+  static catmullRomToBezier(p0, p1, p2, p3, smoothing1 = 1, smoothing2 = undefined) {
+    // smoothing1: smoothing at p1 (for cp1), smoothing2: smoothing at p2 (for cp2)
+    // 0 = sharp corner (no tangent), 1 = full Catmull-Rom smoothing
+    if (smoothing2 === undefined) smoothing2 = smoothing1;
+
+    const t1 = (1 / 3) * smoothing1;
+    const t2 = (1 / 3) * smoothing2;
 
     return {
       cp1: {
-        x: p1.x + t * (p2.x - p0.x),
-        y: p1.y + t * (p2.y - p0.y)
+        x: p1.x + t1 * (p2.x - p0.x),
+        y: p1.y + t1 * (p2.y - p0.y)
       },
       cp2: {
-        x: p2.x - t * (p3.x - p1.x),
-        y: p2.y - t * (p3.y - p1.y)
+        x: p2.x - t2 * (p3.x - p1.x),
+        y: p2.y - t2 * (p3.y - p1.y)
       }
     };
   }
@@ -97,9 +101,10 @@ export class BezierMath {
         y: 2 * points[n - 1].y - points[n - 2].y
       };
 
-      // Use per-point smoothing if available (default: 1 = full smooth)
-      const smoothing = next.smoothing !== undefined ? next.smoothing : 1;
-      const { cp1, cp2 } = this.catmullRomToBezier(prev, curr, next, nextNext, smoothing);
+      // Use per-point smoothing: curr controls cp1, next controls cp2
+      const smoothingCurr = curr.smoothing !== undefined ? curr.smoothing : 1;
+      const smoothingNext = next.smoothing !== undefined ? next.smoothing : 1;
+      const { cp1, cp2 } = this.catmullRomToBezier(prev, curr, next, nextNext, smoothingCurr, smoothingNext);
 
       curves.push({
         p0: curr,

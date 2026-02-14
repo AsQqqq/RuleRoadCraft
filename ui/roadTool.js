@@ -126,12 +126,13 @@ export class RoadTool {
     this.viewport.addEventListener('mousedown', this._onMouseDown);
     window.addEventListener('mousemove', this._onMouseMove);
     window.addEventListener('mouseup', this._onMouseUp);
+    this.viewport.addEventListener('dblclick', this._onDblClick);
     window.addEventListener('keydown', this._onKeyDown);
     this.viewport.addEventListener('wheel', this._onWheel, { passive: false });
 
     this.renderer.highlightAllRoads(true);
     this.ui?.setEditMode();
-    this.ui?.showHint('Click a road to select it. Drag points to edit.');
+    this.ui?.showHint('Click a road to select it. Drag points to edit. Double-click road to add point.');
   }
 
   deactivateEditMode() {
@@ -148,6 +149,7 @@ export class RoadTool {
     this.viewport.removeEventListener('mousedown', this._onMouseDown);
     window.removeEventListener('mousemove', this._onMouseMove);
     window.removeEventListener('mouseup', this._onMouseUp);
+    this.viewport.removeEventListener('dblclick', this._onDblClick);
     window.removeEventListener('keydown', this._onKeyDown);
     this.viewport.removeEventListener('wheel', this._onWheel);
 
@@ -211,13 +213,22 @@ export class RoadTool {
   }
 
   _onDblClick(e) {
-    if (this.state !== STATE.DRAWING) return;
-    e.preventDefault();
-    e.stopPropagation();
+    if (this.state === STATE.DRAWING) {
+      e.preventDefault();
+      e.stopPropagation();
+      const world = this._screenToWorld(e);
+      const clamped = this._clampToWorldBounds(world);
+      this._finishDrawing(clamped);
+      return;
+    }
 
-    const world = this._screenToWorld(e);
-    const clamped = this._clampToWorldBounds(world);
-    this._finishDrawing(clamped);
+    if (this.state === STATE.EDITING) {
+      e.preventDefault();
+      e.stopPropagation();
+      const world = this._screenToWorld(e);
+      this._handleEditingDblClick(world);
+      return;
+    }
   }
 
   _onKeyDown(e) {
@@ -258,8 +269,26 @@ export class RoadTool {
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
 
-      // Edit mode: delete selected road
+      // Edit mode: delete selected control point, or entire road if no point selected
       if (this.state === STATE.EDITING && this.selectedSegment) {
+        // If a control point is selected (not a node), delete just that point
+        if (this.selectedPointIndex !== null && this.selectedPointIndex >= 0) {
+          this.selectedSegment.controlPoints.splice(this.selectedPointIndex, 1);
+          this.selectedPointIndex = null;
+
+          // Rebuild geometry
+          const sn = this.network.getNode(this.selectedSegment.startNodeId);
+          const en = this.network.getNode(this.selectedSegment.endNodeId);
+          if (sn && en) this.selectedSegment.rebuild(sn, en);
+
+          this.renderer.render();
+          this.renderer.highlightAllRoads(true);
+          this.renderer.renderEditHandles(this.selectedSegment, this.network, null);
+          this.ui?.showHint('Point removed. Select another point or press Delete to remove road.');
+          return;
+        }
+
+        // No point selected (or node selected) — delete entire road
         this.network.removeSegment(this.selectedSegment.id);
         this.selectedSegment = null;
         this.selectedPointIndex = null;
@@ -466,10 +495,22 @@ export class RoadTool {
   _handleEditingDragMove(world) {
     if (!this.dragOffset || !this.selectedSegment || this.selectedPointIndex === null) return;
 
-    const newPos = this._clampToWorldBounds({
+    let newPos = this._clampToWorldBounds({
       x: world.x - this.dragOffset.x,
       y: world.y - this.dragOffset.y
     });
+
+    // Boundary nodes can only slide along their boundary edge
+    if (this.selectedPointIndex === -1 || this.selectedPointIndex === -2) {
+      const nodeId = this.selectedPointIndex === -1
+        ? this.selectedSegment.startNodeId
+        : this.selectedSegment.endNodeId;
+      const node = this.network.getNode(nodeId);
+
+      if (node && node.isBoundary) {
+        newPos = this._constrainToBoundaryEdge(node, newPos);
+      }
+    }
 
     this._setControlPointPosition(this.selectedSegment, this.selectedPointIndex, newPos);
 
@@ -501,6 +542,55 @@ export class RoadTool {
   _handleEditingDragEnd() {
     this.dragOffset = null;
     this.state = STATE.EDITING;
+  }
+
+  /**
+   * Double-click in edit mode: insert a new control point on the selected
+   * segment (or the nearest segment) at the clicked position.
+   */
+  _handleEditingDblClick(world) {
+    // Determine which segment to add a point to
+    let segment = this.selectedSegment;
+
+    if (!segment) {
+      // Try to find a segment near the click
+      const nearSeg = this.network.findSegmentNear(world.x, world.y, 30);
+      if (!nearSeg) return;
+      segment = nearSeg.segment;
+    }
+
+    // Find where on the segment the click landed
+    const closest = segment.closestPoint(world.x, world.y);
+    if (closest.dist > 40) return; // too far from road
+
+    // Determine insertion index: the new control point goes after curveIndex - 1
+    // because controlPoints[0] corresponds to the point between curve 0 and curve 1.
+    // Curve i connects: allPoints[i] → allPoints[i+1]
+    // allPoints = [startNode, cp0, cp1, ..., endNode]
+    // So curveIndex 0 = startNode→cp0, curveIndex 1 = cp0→cp1, etc.
+    // A new point on curveIndex i should be inserted at controlPoints index = i
+    const insertIndex = closest.curveIndex;
+
+    // Insert a new control point at the closest position with smoothing = 0
+    const newPoint = { x: closest.x, y: closest.y, smoothing: 0 };
+    segment.controlPoints.splice(insertIndex, 0, newPoint);
+
+    // Rebuild geometry
+    const startNode = this.network.getNode(segment.startNodeId);
+    const endNode = this.network.getNode(segment.endNodeId);
+    if (startNode && endNode) {
+      segment.rebuild(startNode, endNode);
+    }
+
+    // Update selection to the new point
+    this.selectedSegment = segment;
+    this.selectedPointIndex = insertIndex;
+
+    this.renderer.render();
+    this.renderer.highlightAllRoads(true);
+    this.renderer.renderEditHandles(segment, this.network, insertIndex);
+
+    this.ui?.showHint('New point added. Drag to move, scroll to smooth.');
   }
 
   // ─── Control point helpers (edit mode) ───
@@ -687,6 +777,33 @@ export class RoadTool {
   }
 
   // ─── Boundary helpers ───
+
+  /**
+   * Constrain a boundary node to slide only along the boundary edge it's on.
+   * Determines which edge the node is on based on its current position,
+   * then locks the perpendicular axis while allowing movement along the edge.
+   */
+  _constrainToBoundaryEdge(node, newPos) {
+    const { minX, minY, maxX, maxY } = this.bounds;
+
+    // Determine which edge this node currently sits on
+    const dLeft = Math.abs(node.x - minX);
+    const dRight = Math.abs(node.x - maxX);
+    const dTop = Math.abs(node.y - minY);
+    const dBottom = Math.abs(node.y - maxY);
+    const minDist = Math.min(dLeft, dRight, dTop, dBottom);
+
+    if (minDist === dLeft) {
+      // Left edge: lock x to minX, allow y to slide
+      return { x: minX, y: Math.max(minY, Math.min(maxY, newPos.y)) };
+    } else if (minDist === dRight) {
+      return { x: maxX, y: Math.max(minY, Math.min(maxY, newPos.y)) };
+    } else if (minDist === dTop) {
+      return { x: Math.max(minX, Math.min(maxX, newPos.x)), y: minY };
+    } else {
+      return { x: Math.max(minX, Math.min(maxX, newPos.x)), y: maxY };
+    }
+  }
 
   _isOnBoundary(pos, threshold = 20) {
     const { minX, minY, maxX, maxY } = this.bounds;
